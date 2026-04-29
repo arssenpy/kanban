@@ -1,7 +1,7 @@
 import { dataBase } from "@/shared/api/FakeData";
 import { Card } from "./types";
 
-export const listApi = {
+export const cardApi = {
   getCardsByList: async (listId: string): Promise<Card[]> => {
     return dataBase.cards
       .filter((card) => card.listId === listId)

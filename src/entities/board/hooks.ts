@@ -15,7 +15,8 @@ export const useCreateBoard = () => {
   return useMutation({
     mutationFn: boardsApi.createBoards,
 
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("BOARD CREATED:", data);
       queryClient.invalidateQueries({
         queryKey: queryKeys.boards,
       });

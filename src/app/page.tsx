@@ -1,19 +1,19 @@
 "use client";
 
 import { useBoards, useCreateBoard } from "@/entities/board/hooks";
+import { BoardView } from "@/widgets/board-view";
 import { useState } from "react";
 
 export default function Page() {
-  const { data: boards, isLoading } = useBoards();
+  const { data: boards } = useBoards();
   const createBoard = useCreateBoard();
 
   const [title, setTitle] = useState("");
-
-  if (isLoading) return <div>Loading...</div>;
+  const [activeBoardId, setActiveBoardId] = useState<string | null>(null);
 
   return (
     <div className="p-4">
-      <h1 className="text-xl mb-4">Boards</h1>
+      <h1 className="text-2xl mb-4">Kanban</h1>
 
       <div className="mb-4">
         <input
@@ -23,22 +23,32 @@ export default function Page() {
         />
         <button
           onClick={() => {
-            createBoard.mutate(title);
+            createBoard.mutate(title, {
+              onSuccess: (b) => setActiveBoardId(b.id),
+            });
             setTitle("");
           }}
           className="bg-blue-500 text-white px-4 py-2"
         >
-          Create
+          Create Board
         </button>
       </div>
 
-      <div>
+      <div className="flex gap-2 mb-4">
         {boards?.map((b) => (
-          <div key={b.id} className="p-2 border mb-2">
+          <button
+            key={b.id}
+            onClick={() => setActiveBoardId(b.id)}
+            className={`px-3 py-1 border ${
+              activeBoardId === b.id ? "bg-blue-200" : ""
+            }`}
+          >
             {b.title}
-          </div>
+          </button>
         ))}
       </div>
+
+      {activeBoardId && <BoardView boardId={activeBoardId} />}
     </div>
   );
 }
