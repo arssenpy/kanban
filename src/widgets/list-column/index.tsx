@@ -3,7 +3,10 @@
 import {
   SortableContext,
   verticalListSortingStrategy,
+  useSortable,
 } from "@dnd-kit/sortable";
+
+import { CSS } from "@dnd-kit/utilities";
 
 import { useCards, useCreateCard } from "@/entities/card/hooks";
 import { CardItem } from "@/widgets/card-item";
@@ -16,9 +19,37 @@ export function ListColumn({ list }: { list: List }) {
 
   const [title, setTitle] = useState("");
 
+  const {
+    setNodeRef,
+    attributes,
+    listeners,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: list.id,
+    data: { type: "List", list },
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <div className="w-64 bg-gray-100 p-3 rounded">
-      <h3 className="font-bold mb-2">{list.title}</h3>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="w-64 bg-gray-100 p-3 rounded flex-shrink-0"
+    >
+      <h3
+        {...attributes}
+        {...listeners}
+        className="font-bold mb-2 cursor-grab active:cursor-grabbing"
+      >
+        {list.title}
+      </h3>
 
       <div className="mb-2">
         <input
@@ -39,6 +70,7 @@ export function ListColumn({ list }: { list: List }) {
       </div>
 
       <SortableContext
+        id={list.id}
         items={cards.map((c) => c.id)}
         strategy={verticalListSortingStrategy}
       >

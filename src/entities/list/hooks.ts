@@ -23,3 +23,16 @@ export const useCreateList = (boardId: string) => {
     },
   });
 };
+
+export const useReorderLists = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: listApi.reorder,
+
+    onError: (err) => {
+      queryClient.invalidateQueries({ queryKey: ["lists"] });
+      console.error(err);
+    },
+  });
+};

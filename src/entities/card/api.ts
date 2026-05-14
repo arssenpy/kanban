@@ -1,5 +1,6 @@
 import { dataBase } from "@/shared/api/FakeData";
 import { Card } from "./types";
+import axios from "axios";
 
 export const cardApi = {
   getCardsByList: async (listId: string): Promise<Card[]> => {
@@ -20,5 +21,19 @@ export const cardApi = {
 
     dataBase.cards.push(newCard);
     return newCard;
+  },
+
+  reorder: async (payload: { id: string; listId: string; order: number }[]) => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    payload.forEach((updatedCard) => {
+      const card = dataBase.cards.find((c) => c.id === updatedCard.id);
+      if (card) {
+        card.order = updatedCard.order;
+        card.listId = updatedCard.listId;
+      }
+    });
+
+    return { success: true };
   },
 };

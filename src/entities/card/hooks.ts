@@ -23,3 +23,16 @@ export const useCreateCard = (listId: string) => {
     },
   });
 };
+
+export const useReorderCards = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: cardApi.reorder,
+
+    onError: (err) => {
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+      console.error("Failed to reorder:", err);
+    },
+  });
+};

@@ -21,4 +21,17 @@ export const listApi = {
     dataBase.lists.push(newList);
     return newList;
   },
+
+  reorder: async (payload: { id: string; order: number }[]) => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    payload.forEach((updatedList) => {
+      const list = dataBase.lists.find((l) => l.id === updatedList.id);
+      if (list) {
+        list.order = updatedList.order;
+      }
+    });
+
+    return { success: true };
+  },
 };
