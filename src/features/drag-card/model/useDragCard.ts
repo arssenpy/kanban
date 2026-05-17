@@ -3,9 +3,9 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
 import { useReorderCards } from "@/entities/card/hooks";
 import { queryKeys } from "@/shared/api/queryKeys";
+import { useReorderLists } from "@/entities/list/hooks";
 import { Card } from "@/entities/card/types";
 import { List } from "@/entities/list/types";
-import { useReorderLists } from "@/entities/list/hooks";
 
 export const useDragCard = () => {
   const queryClient = useQueryClient();
@@ -18,15 +18,15 @@ export const useDragCard = () => {
 
     const activeId = active.id as string;
     const overId = over.id as string;
-    const activeType = active.data.current?.type;
 
-    if (activeType === "List") {
+    if (active.data.current?.type === "List") {
       const oldIndex = lists.findIndex((l) => l.id === activeId);
       const newIndex = lists.findIndex((l) => l.id === overId);
 
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
         const newLists = arrayMove(lists, oldIndex, newIndex);
         const boardId = lists[0]?.boardId;
+
         if (boardId) {
           queryClient.setQueryData(queryKeys.lists(boardId), newLists);
           reorderListsMutation.mutate(
@@ -44,8 +44,6 @@ export const useDragCard = () => {
 
     const sourceCards =
       queryClient.getQueryData<Card[]>(queryKeys.cards(activeListId)) || [];
-    const targetCards =
-      queryClient.getQueryData<Card[]>(queryKeys.cards(overListId)) || [];
 
     if (activeListId === overListId) {
       const oldIndex = sourceCards.findIndex((c) => c.id === activeId);
@@ -53,26 +51,26 @@ export const useDragCard = () => {
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newCards = arrayMove(sourceCards, oldIndex, newIndex);
-        const payload = newCards.map((c, i) => ({
-          id: c.id,
-          listId: c.listId,
-          order: i,
-        }));
 
         queryClient.setQueryData(queryKeys.cards(activeListId), newCards);
-        reorderMutation.mutate(payload);
+
+        reorderMutation.mutate(
+          newCards.map((c, i) => ({ id: c.id, listId: c.listId, order: i })),
+        );
       }
       return;
     }
 
+    const targetCards =
+      queryClient.getQueryData<Card[]>(queryKeys.cards(overListId)) || [];
     const activeCard = sourceCards.find((c) => c.id === activeId);
     if (!activeCard) return;
 
     const newSourceCards = sourceCards.filter((c) => c.id !== activeId);
-    const newTargetCards = [...targetCards];
     const overIndex = targetCards.findIndex((c) => c.id === overId);
-    const insertionIndex = overIndex >= 0 ? overIndex : newTargetCards.length;
+    const insertionIndex = overIndex >= 0 ? overIndex : targetCards.length;
 
+    const newTargetCards = [...targetCards];
     newTargetCards.splice(insertionIndex, 0, {
       ...activeCard,
       listId: overListId,
@@ -81,7 +79,7 @@ export const useDragCard = () => {
     queryClient.setQueryData(queryKeys.cards(activeListId), newSourceCards);
     queryClient.setQueryData(queryKeys.cards(overListId), newTargetCards);
 
-    const payload = [
+    reorderMutation.mutate([
       ...newSourceCards.map((c, i) => ({
         id: c.id,
         listId: activeListId,
@@ -92,9 +90,7 @@ export const useDragCard = () => {
         listId: overListId,
         order: i,
       })),
-    ];
-
-    reorderMutation.mutate(payload);
+    ]);
   };
 
   return { handleDragEnd };

@@ -2,63 +2,63 @@
 
 import { useLists, useCreateList } from "@/entities/list/hooks";
 import { ListColumn } from "../list-column";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { DndContext, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { useDragCard } from "@/features/drag-card/model/useDragCard";
 import { CardItem } from "@/widgets/card-item";
 import { Card } from "@/entities/card/types";
-import { SortableContext } from "@dnd-kit/sortable";
-import { horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { List } from "@/entities/list/types";
+import { CreateListForm } from "./Create-List-Form";
 
 export function BoardView({ boardId }: { boardId: string }) {
   const { data: lists = [] } = useLists(boardId);
   const createList = useCreateList(boardId);
   const { handleDragEnd } = useDragCard();
 
-  const [title, setTitle] = useState("");
-
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [activeList, setActiveList] = useState<List | null>(null);
 
+  const handleCreateList = useCallback(
+    (title: string) => {
+      createList.mutate(title);
+    },
+    [createList],
+  );
+
+  const listIds = useMemo(() => lists.map((l) => l.id), [lists]);
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const { active } = event;
+    if (active.data.current?.type === "List") {
+      setActiveList(active.data.current.list);
+    } else {
+      setActiveCard(active.data.current?.card || null);
+    }
+  }, []);
+
+  const handleDragEndCallback = useCallback(
+    (event: any) => {
+      handleDragEnd(event, lists);
+      setActiveCard(null);
+      setActiveList(null);
+    },
+    [handleDragEnd, lists],
+  );
+
   return (
     <div className="p-4">
-      <div className="mb-4 flex gap-2">
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="border p-2"
-          placeholder="New list..."
-        />
-        <button
-          onClick={() => {
-            if (!title.trim()) return;
-            createList.mutate(title);
-            setTitle("");
-          }}
-          className="bg-green-500 text-white px-4"
-        >
-          Add List
-        </button>
-      </div>
+      <CreateListForm onCreate={handleCreateList} />
 
       <DndContext
-        onDragStart={(event) => {
-          const { active } = event;
-          if (active.data.current?.type === "List") {
-            setActiveList(active.data.current.list);
-          } else {
-            setActiveCard(active.data.current?.card || null);
-          }
-        }}
-        onDragEnd={(e) => {
-          handleDragEnd(e, lists);
-          setActiveCard(null);
-          setActiveList(null);
-        }}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEndCallback}
       >
         <SortableContext
-          items={lists.map((l) => l.id)}
+          items={listIds}
           strategy={horizontalListSortingStrategy}
         >
           <div className="flex gap-4 items-start overflow-x-auto p-4">

@@ -1,23 +1,20 @@
 "use client";
 
+import { memo, useMemo, useCallback } from "react";
 import {
   SortableContext,
   verticalListSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
-
 import { CSS } from "@dnd-kit/utilities";
-
 import { useCards, useCreateCard } from "@/entities/card/hooks";
 import { CardItem } from "@/widgets/card-item";
 import { List } from "@/entities/list/types";
-import { useState } from "react";
+import { CreateCardForm } from "./Create-Card-Form";
 
-export function ListColumn({ list }: { list: List }) {
+export const ListColumn = memo(({ list }: { list: List }) => {
   const { data: cards = [] } = useCards(list.id);
   const createCard = useCreateCard(list.id);
-
-  const [title, setTitle] = useState("");
 
   const {
     setNodeRef,
@@ -31,6 +28,15 @@ export function ListColumn({ list }: { list: List }) {
     data: { type: "List", list },
   });
 
+  const handleCreateCard = useCallback(
+    (title: string) => {
+      createCard.mutate(title);
+    },
+    [createCard],
+  );
+
+  const cardIds = useMemo(() => cards.map((c) => c.id), [cards]);
+
   const style = {
     transform: CSS.Translate.toString(transform),
     transition,
@@ -41,40 +47,24 @@ export function ListColumn({ list }: { list: List }) {
     <div
       ref={setNodeRef}
       style={style}
-      className="w-64 bg-gray-100 p-3 rounded flex-shrink-0"
+      className="w-64 bg-gray-100 p-3 rounded flex-shrink-0 flex flex-col max-h-[80vh]"
     >
       <h3
         {...attributes}
         {...listeners}
-        className="font-bold mb-2 cursor-grab active:cursor-grabbing"
+        className="font-bold mb-2 cursor-grab active:cursor-grabbing select-none"
       >
         {list.title}
       </h3>
 
-      <div className="mb-2">
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="border p-1 w-full"
-        />
-        <button
-          onClick={() => {
-            if (!title.trim()) return;
-            createCard.mutate(title);
-            setTitle("");
-          }}
-          className="bg-blue-500 text-white w-full mt-1"
-        >
-          Add Card
-        </button>
-      </div>
+      <CreateCardForm onCreate={handleCreateCard} />
 
       <SortableContext
         id={list.id}
-        items={cards.map((c) => c.id)}
+        items={cardIds}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-2">
+        <div className="space-y-2 overflow-y-auto pr-1 flex-1">
           {cards.map((card) => (
             <CardItem key={card.id} card={card} />
           ))}
@@ -82,4 +72,6 @@ export function ListColumn({ list }: { list: List }) {
       </SortableContext>
     </div>
   );
-}
+});
+
+ListColumn.displayName = "ListColumn";
