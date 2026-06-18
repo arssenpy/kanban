@@ -1,37 +1,26 @@
-import { dataBase } from "@/shared/api/FakeData";
+import axios from "axios";
 import { List } from "./types";
 
 export const listApi = {
   getListsByBoard: async (boardId: string): Promise<List[]> => {
-    return dataBase.lists
-      .filter((list) => list.boardId === boardId)
-      .sort((a, b) => a.order - b.order);
+    const response = await axios.get<List[]>(`/api/lists?boardId=${boardId}`);
+    return response.data;
   },
 
-  createList: async (title: string, boardId: string): Promise<List> => {
-    const lists = dataBase.lists.filter((list) => list.boardId === boardId);
-
-    const newList = {
-      id: crypto.randomUUID(),
+  createList: async (
+    title: string,
+    boardId: string,
+    currentListsCount: number,
+  ): Promise<List> => {
+    const response = await axios.post<List>("/api/lists", {
       title,
       boardId,
-      order: lists.length,
-    };
-
-    dataBase.lists.push(newList);
-    return newList;
+      order: currentListsCount,
+    });
+    return response.data;
   },
 
-  reorder: async (payload: { id: string; order: number }[]) => {
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    payload.forEach((updatedList) => {
-      const list = dataBase.lists.find((l) => l.id === updatedList.id);
-      if (list) {
-        list.order = updatedList.order;
-      }
-    });
-
-    return { success: true };
+  reorder: async (payload: { id: string; order: number }[]): Promise<void> => {
+    await axios.patch("/api/lists/reorder", payload);
   },
 };

@@ -1,39 +1,28 @@
-import { dataBase } from "@/shared/api/FakeData";
-import { Card } from "./types";
 import axios from "axios";
+import { Card } from "./types";
 
 export const cardApi = {
   getCardsByList: async (listId: string): Promise<Card[]> => {
-    return dataBase.cards
-      .filter((card) => card.listId === listId)
-      .sort((a, b) => a.order - b.order);
+    const response = await axios.get<Card[]>(`/api/cards?listId=${listId}`);
+    return response.data;
   },
 
-  createCard: async (title: string, listId: string): Promise<Card> => {
-    const cards = dataBase.cards.filter((card) => card.listId === listId);
-
-    const newCard = {
-      id: crypto.randomUUID(),
+  createCard: async (
+    title: string,
+    listId: string,
+    currentCardsCount: number,
+  ): Promise<Card> => {
+    const response = await axios.post<Card>("/api/cards", {
       title,
       listId,
-      order: cards.length,
-    };
-
-    dataBase.cards.push(newCard);
-    return newCard;
+      order: currentCardsCount,
+    });
+    return response.data;
   },
 
-  reorder: async (payload: { id: string; listId: string; order: number }[]) => {
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    payload.forEach((updatedCard) => {
-      const card = dataBase.cards.find((c) => c.id === updatedCard.id);
-      if (card) {
-        card.order = updatedCard.order;
-        card.listId = updatedCard.listId;
-      }
-    });
-
-    return { success: true };
+  reorder: async (
+    payload: { id: string; order: number; listId: string }[],
+  ): Promise<void> => {
+    await axios.patch("/api/cards/reorder", payload);
   },
 };

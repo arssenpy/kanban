@@ -30,9 +30,9 @@ export const ListColumn = memo(({ list }: { list: List }) => {
 
   const handleCreateCard = useCallback(
     (title: string) => {
-      createCard.mutate(title);
+      createCard.mutate({ title, currentCardsCount: cards.length });
     },
-    [createCard],
+    [createCard, cards.length],
   );
 
   const cardIds = useMemo(() => cards.map((c) => c.id), [cards]);

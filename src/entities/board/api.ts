@@ -1,18 +1,14 @@
-import { dataBase } from "@/shared/api/FakeData";
 import { Board } from "./types";
+import axios from "axios";
 
 export const boardsApi = {
   getBoards: async (): Promise<Board[]> => {
-    return dataBase.boards;
+    const response = await axios.get<Board[]>("/api/boards");
+    return response.data;
   },
 
   createBoards: async (title: string): Promise<Board> => {
-    const newBoard: Board = {
-      id: crypto.randomUUID(),
-      title: title,
-    };
-
-    dataBase.boards.push(newBoard);
-    return newBoard;
+    const response = await axios.post<Board>("/api/boards", { title });
+    return response.data;
   },
 };

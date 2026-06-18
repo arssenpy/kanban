@@ -17,16 +17,16 @@ import { CreateListForm } from "./Create-List-Form";
 export function BoardView({ boardId }: { boardId: string }) {
   const { data: lists = [] } = useLists(boardId);
   const createList = useCreateList(boardId);
-  const { handleDragEnd } = useDragCard();
+  const { handleDragEnd } = useDragCard(boardId);
 
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [activeList, setActiveList] = useState<List | null>(null);
 
   const handleCreateList = useCallback(
     (title: string) => {
-      createList.mutate(title);
+      createList.mutate({ title, currentListsCount: lists.length });
     },
-    [createList],
+    [CreateListForm, lists.length],
   );
 
   const listIds = useMemo(() => lists.map((l) => l.id), [lists]);

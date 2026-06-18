@@ -5,7 +5,7 @@ import { queryKeys } from "@/shared/api/queryKeys";
 export const useLists = (boardId: string) => {
   return useQuery({
     queryKey: queryKeys.lists(boardId),
-    queryFn: () => listApi.getListsByBoard(boardId),
+    queryFn: () => listApi.getListsByBoard(boardId), // Взято точно з твого api.ts
     enabled: !!boardId,
   });
 };
@@ -14,7 +14,13 @@ export const useCreateList = (boardId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (title: string) => listApi.createList(title, boardId),
+    mutationFn: ({
+      title,
+      currentListsCount,
+    }: {
+      title: string;
+      currentListsCount: number;
+    }) => listApi.createList(title, boardId, currentListsCount),
 
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -24,15 +30,20 @@ export const useCreateList = (boardId: string) => {
   });
 };
 
-export const useReorderLists = () => {
+export const useReorderLists = (boardId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: listApi.reorder,
+    mutationFn: listApi.reorder, // Взято з твого api.ts
 
-    onError: (err) => {
-      queryClient.invalidateQueries({ queryKey: ["lists"] });
-      console.error(err);
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.lists(boardId),
+      });
+    },
+
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.lists(boardId) });
     },
   });
 };

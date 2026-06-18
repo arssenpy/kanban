@@ -7,10 +7,10 @@ import { useReorderLists } from "@/entities/list/hooks";
 import { Card } from "@/entities/card/types";
 import { List } from "@/entities/list/types";
 
-export const useDragCard = () => {
+export const useDragCard = (boardId: string, listId: string = "") => {
   const queryClient = useQueryClient();
-  const reorderMutation = useReorderCards();
-  const reorderListsMutation = useReorderLists();
+  const reorderMutation = useReorderCards(listId);
+  const reorderListsMutation = useReorderLists(boardId);
 
   const handleDragEnd = (event: DragEndEvent, lists: List[]) => {
     const { active, over } = event;
@@ -38,9 +38,15 @@ export const useDragCard = () => {
     }
 
     const activeListId = active.data.current?.sortable.containerId;
-    const overListId = over.data.current?.sortable.containerId || overId;
+    let overListId = over.data.current?.sortable.containerId || overId;
 
-    if (!activeListId || !overListId) return;
+    if (overListId.startsWith("Sortable-")) {
+      overListId = overId;
+    }
+
+    if (!activeListId || !overListId) {
+      return;
+    }
 
     const sourceCards =
       queryClient.getQueryData<Card[]>(queryKeys.cards(activeListId)) || [];
@@ -52,10 +58,14 @@ export const useDragCard = () => {
       if (oldIndex !== -1 && newIndex !== -1) {
         const newCards = arrayMove(sourceCards, oldIndex, newIndex);
 
-        queryClient.setQueryData(queryKeys.cards(activeListId), newCards);
+        queryClient.setQueryData(["cards", activeListId], newCards);
 
         reorderMutation.mutate(
-          newCards.map((c, i) => ({ id: c.id, listId: c.listId, order: i })),
+          newCards.map((c, i) => ({
+            id: c.id,
+            listId: activeListId,
+            order: i,
+          })),
         );
       }
       return;
@@ -92,6 +102,5 @@ export const useDragCard = () => {
       })),
     ]);
   };
-
   return { handleDragEnd };
 };

@@ -14,25 +14,32 @@ export const useCreateCard = (listId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (title: string) => cardApi.createCard(title, listId),
+    mutationFn: ({
+      title,
+      currentCardsCount,
+    }: {
+      title: string;
+      currentCardsCount: number;
+    }) => cardApi.createCard(title, listId, currentCardsCount),
 
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.cards(listId),
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards(listId) });
     },
   });
 };
 
-export const useReorderCards = () => {
+export const useReorderCards = (listId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: cardApi.reorder,
 
-    onError: (err) => {
-      queryClient.invalidateQueries({ queryKey: ["cards"] });
-      console.error("Failed to reorder:", err);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards(listId) });
+    },
+
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards(listId) });
     },
   });
 };
