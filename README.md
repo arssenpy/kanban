@@ -1,6 +1,6 @@
-# Full-stack Kanban Board
+# Front-end Kanban Board
 
-**Feature Sliced Design** built as a complete Full-stack solution
+**Feature Sliced Design** built as a complete front solution
 
 **Live Demo:** [https://kanban-mu-ten.vercel.app/]
 
