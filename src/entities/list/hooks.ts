@@ -1,11 +1,18 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { listApi } from "./api";
 import { queryKeys } from "@/shared/api/queryKeys";
+import { List } from "./types";
+
+type ReorderListsVariables = {
+  boardId: string;
+  updates: { id: string; order: number }[];
+  previousLists: List[] | undefined;
+};
 
 export const useLists = (boardId: string) => {
   return useQuery({
     queryKey: queryKeys.lists(boardId),
-    queryFn: () => listApi.getListsByBoard(boardId), // Взято точно з твого api.ts
+    queryFn: () => listApi.getListsByBoard(boardId),
     enabled: !!boardId,
   });
 };
@@ -30,20 +37,28 @@ export const useCreateList = (boardId: string) => {
   });
 };
 
-export const useReorderLists = (boardId: string) => {
+export const useReorderLists = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: listApi.reorder, // Взято з твого api.ts
+    mutationFn: ({ updates }: ReorderListsVariables) =>
+      listApi.reorder(updates),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.lists(boardId),
-      });
+    onMutate: async ({ boardId }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.lists(boardId) });
     },
 
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.lists(boardId) });
+    onError: (err, variables) => {
+      queryClient.setQueryData(
+        queryKeys.lists(variables.boardId),
+        variables.previousLists,
+      );
+    },
+
+    onSettled: (data, error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.lists(variables.boardId),
+      });
     },
   });
 };

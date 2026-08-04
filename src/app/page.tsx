@@ -13,8 +13,6 @@ export default function Page() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl mb-4">Kanban</h1>
-
       <div className="mb-4">
         <input
           value={title}

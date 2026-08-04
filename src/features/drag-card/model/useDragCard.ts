@@ -7,10 +7,10 @@ import { useReorderLists } from "@/entities/list/hooks";
 import { Card } from "@/entities/card/types";
 import { List } from "@/entities/list/types";
 
-export const useDragCard = (boardId: string, listId: string = "") => {
+export const useDragCard = (boardId: string) => {
   const queryClient = useQueryClient();
-  const reorderMutation = useReorderCards(listId);
-  const reorderListsMutation = useReorderLists(boardId);
+  const reorderCardsMutation = useReorderCards();
+  const reorderListsMutation = useReorderLists();
 
   const handleDragEnd = (event: DragEndEvent, lists: List[]) => {
     const { active, over } = event;
@@ -24,15 +24,21 @@ export const useDragCard = (boardId: string, listId: string = "") => {
       const newIndex = lists.findIndex((l) => l.id === overId);
 
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-        const newLists = arrayMove(lists, oldIndex, newIndex);
-        const boardId = lists[0]?.boardId;
+        const previousLists = queryClient.getQueryData<List[]>(
+          queryKeys.lists(boardId),
+        );
+        const newLists = arrayMove(lists, oldIndex, newIndex).map((l, i) => ({
+          ...l,
+          order: i,
+        }));
 
-        if (boardId) {
-          queryClient.setQueryData(queryKeys.lists(boardId), newLists);
-          reorderListsMutation.mutate(
-            newLists.map((l, i) => ({ id: l.id, order: i })),
-          );
-        }
+        queryClient.setQueryData(queryKeys.lists(boardId), newLists);
+
+        reorderListsMutation.mutate({
+          boardId,
+          updates: newLists.map((l) => ({ id: l.id, order: l.order })),
+          previousLists,
+        });
       }
       return;
     }
@@ -44,9 +50,7 @@ export const useDragCard = (boardId: string, listId: string = "") => {
       overListId = overId;
     }
 
-    if (!activeListId || !overListId) {
-      return;
-    }
+    if (!activeListId || !overListId) return;
 
     const sourceCards =
       queryClient.getQueryData<Card[]>(queryKeys.cards(activeListId)) || [];
@@ -54,20 +58,29 @@ export const useDragCard = (boardId: string, listId: string = "") => {
     if (activeListId === overListId) {
       const oldIndex = sourceCards.findIndex((c) => c.id === activeId);
       const newIndex = sourceCards.findIndex((c) => c.id === overId);
+      if (oldIndex === -1 || newIndex === -1) return;
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newCards = arrayMove(sourceCards, oldIndex, newIndex);
+      const previousCards = queryClient.getQueryData<Card[]>(
+        queryKeys.cards(activeListId),
+      );
+      const newCards = arrayMove(sourceCards, oldIndex, newIndex).map(
+        (c, i) => ({
+          ...c,
+          order: i,
+        }),
+      );
 
-        queryClient.setQueryData(["cards", activeListId], newCards);
+      queryClient.setQueryData(queryKeys.cards(activeListId), newCards);
 
-        reorderMutation.mutate(
-          newCards.map((c, i) => ({
-            id: c.id,
-            listId: activeListId,
-            order: i,
-          })),
-        );
-      }
+      reorderCardsMutation.mutate({
+        updates: newCards.map((c) => ({
+          id: c.id,
+          order: c.order,
+          listId: activeListId,
+        })),
+        affectedListIds: [activeListId],
+        previousCache: [{ listId: activeListId, cards: previousCards }],
+      });
       return;
     }
 
@@ -76,31 +89,53 @@ export const useDragCard = (boardId: string, listId: string = "") => {
     const activeCard = sourceCards.find((c) => c.id === activeId);
     if (!activeCard) return;
 
-    const newSourceCards = sourceCards.filter((c) => c.id !== activeId);
+    const previousSourceCards = queryClient.getQueryData<Card[]>(
+      queryKeys.cards(activeListId),
+    );
+    const previousTargetCards = queryClient.getQueryData<Card[]>(
+      queryKeys.cards(overListId),
+    );
+
+    const newSourceCards = sourceCards
+      .filter((c) => c.id !== activeId)
+      .map((c, i) => ({ ...c, order: i }));
+
     const overIndex = targetCards.findIndex((c) => c.id === overId);
     const insertionIndex = overIndex >= 0 ? overIndex : targetCards.length;
 
-    const newTargetCards = [...targetCards];
-    newTargetCards.splice(insertionIndex, 0, {
+    const newTargetCardsRaw = [...targetCards];
+    newTargetCardsRaw.splice(insertionIndex, 0, {
       ...activeCard,
       listId: overListId,
     });
+    const newTargetCards = newTargetCardsRaw.map((c, i) => ({
+      ...c,
+      order: i,
+    }));
 
     queryClient.setQueryData(queryKeys.cards(activeListId), newSourceCards);
     queryClient.setQueryData(queryKeys.cards(overListId), newTargetCards);
 
-    reorderMutation.mutate([
-      ...newSourceCards.map((c, i) => ({
-        id: c.id,
-        listId: activeListId,
-        order: i,
-      })),
-      ...newTargetCards.map((c, i) => ({
-        id: c.id,
-        listId: overListId,
-        order: i,
-      })),
-    ]);
+    reorderCardsMutation.mutate({
+      updates: [
+        ...newSourceCards.map((c) => ({
+          id: c.id,
+          order: c.order,
+          listId: activeListId,
+        })),
+        ...newTargetCards.map((c) => ({
+          id: c.id,
+          order: c.order,
+          listId: overListId,
+        })),
+      ],
+      affectedListIds: [activeListId, overListId],
+      previousCache: [
+        { listId: activeListId, cards: previousSourceCards },
+        { listId: overListId, cards: previousTargetCards },
+      ],
+    });
   };
+
   return { handleDragEnd };
 };

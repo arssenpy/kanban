@@ -1,14 +1,14 @@
 import { Board } from "./types";
-import axios from "axios";
+import { api } from "@/shared/api/axiosInstance";
 
 export const boardsApi = {
   getBoards: async (): Promise<Board[]> => {
-    const response = await axios.get<Board[]>("/api/boards");
+    const response = await api.get<Board[]>("/api/boards");
     return response.data;
   },
 
   createBoards: async (title: string): Promise<Board> => {
-    const response = await axios.post<Board>("/api/boards", { title });
+    const response = await api.post<Board>("/api/boards", { title });
     return response.data;
   },
 };

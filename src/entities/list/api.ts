@@ -1,9 +1,9 @@
-import axios from "axios";
 import { List } from "./types";
+import { api } from "@/shared/api/axiosInstance";
 
 export const listApi = {
   getListsByBoard: async (boardId: string): Promise<List[]> => {
-    const response = await axios.get<List[]>(`/api/lists?boardId=${boardId}`);
+    const response = await api.get<List[]>(`/api/lists?boardId=${boardId}`);
     return response.data;
   },
 
@@ -12,7 +12,7 @@ export const listApi = {
     boardId: string,
     currentListsCount: number,
   ): Promise<List> => {
-    const response = await axios.post<List>("/api/lists", {
+    const response = await api.post<List>("/api/lists", {
       title,
       boardId,
       order: currentListsCount,
@@ -21,6 +21,6 @@ export const listApi = {
   },
 
   reorder: async (payload: { id: string; order: number }[]): Promise<void> => {
-    await axios.patch("/api/lists/reorder", payload);
+    await api.patch("/api/lists/reorder", payload);
   },
 };
