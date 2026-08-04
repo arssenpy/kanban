@@ -2,6 +2,8 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { listApi } from "./api";
 import { queryKeys } from "@/shared/api/queryKeys";
 import { List } from "./types";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/shared/lib/getErrorMessage";
 
 type ReorderListsVariables = {
   boardId: string;
@@ -33,6 +35,10 @@ export const useCreateList = (boardId: string) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.lists(boardId),
       });
+      toast.success("List created");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Failed to create list"));
     },
   });
 };
@@ -48,11 +54,12 @@ export const useReorderLists = () => {
       await queryClient.cancelQueries({ queryKey: queryKeys.lists(boardId) });
     },
 
-    onError: (err, variables) => {
+    onError: (error, variables) => {
       queryClient.setQueryData(
         queryKeys.lists(variables.boardId),
         variables.previousLists,
       );
+      toast.error(getErrorMessage(error, "Failed to save list order"));
     },
 
     onSettled: (data, error, variables) => {

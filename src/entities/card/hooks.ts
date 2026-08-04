@@ -2,6 +2,8 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { cardApi } from "./api";
 import { queryKeys } from "@/shared/api/queryKeys";
 import { Card } from "./types";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/shared/lib/getErrorMessage";
 
 type CardReorderUpdate = { id: string; order: number; listId: string };
 type ReorderCardsVariables = {
@@ -32,6 +34,11 @@ export const useCreateCard = (listId: string) => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cards(listId) });
+      toast.success("Card created");
+    },
+
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Failed to create card"));
     },
   });
 };
@@ -51,9 +58,10 @@ export const useReorderCards = () => {
       );
     },
 
-    onError: (err, variables) => {
+    onError: (error, variables) => {
       variables.previousCache.forEach(({ listId, cards }) => {
         queryClient.setQueryData(queryKeys.cards(listId), cards);
+        toast.error(getErrorMessage(error, "Failed to save card order"));
       });
     },
 
