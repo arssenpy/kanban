@@ -1,43 +1,75 @@
-# Front-end Kanban Board
+# Kanban — Frontend
 
-**Feature Sliced Design** built as a complete front solution
+Client-side of a Kanban application: boards, lists, and cards with smooth drag-and-drop and optimistic UI updates.
 
-**Live Demo:** [https://kanban-mu-ten.vercel.app/]
+**Live app:** [deployment link]
+**Backend repository:** [[backend repo link](https://github.com/arssenpy/kanban-backend)]
 
-## Tech Stack & Architecture
+![Demo](docs/DnDGIF.gif)
 
-The project is built on a standard **3-Tier Architecture (Client-Server-Database)** using the latest tools in the React ecosystem:
+## Tech Stack
 
-- **Framework:** Next.js (App Router, Serverless API Routes)
-- **Database (BaaS):** Supabase (relational database)
-- **State Management & Data Fetching:** TanStack Query (React Query v5)
-- **Drag and Drop Engine:** @dnd-kit (with custom optimistic updates)
-- **Styling:** Tailwind CSS
-- **Architecture Methodology:** **Feature Sliced Design**
-- **Language:** TypeScript
+- **Next.js** (App Router) + **TypeScript**
+- **TanStack Query (React Query)** — server state, caching, optimistic updates
+- **@dnd-kit** — drag-and-drop for lists and cards
+- **Zustand** — lightweight client state (auth)
+- **Axios** — HTTP client with a JWT interceptor
+- **Sonner** — toast notifications
+- **Feature-Sliced Design (simplified)** — `entities / features / widgets / shared`
 
-## Architectural Concept (Feature Sliced Design)
+## Architectural Decisions
 
-1. `app/` — Global providers, layouts, and server-side API endpoints (`/api/boards`, `/api/cards`, `/api/lists`)
-2. `widgets/` — Self-contained, high-level UI components (`BoardView`, `ListColumn`, `CardItem`)
-3. `features/` — Interactive user actions. The core feature is `drag-card`
-4. `entities/` — Core business entities (`board`, `list`, `card`). They are isolated, have no "peripheral vision" and contain only their own types, clean Axios requests, and React Query hooks
-5. `shared/` — Reusable infrastructure code (Supabase client initialization, centralized `queryKeys` configuration)
+- **Feature-Sliced-like structure**: `entities` hold pure data logic (types, API calls, React Query hooks) with no UI logic; `widgets` assemble these entities into ready UI blocks; `features` encapsulate self-contained interactive behavior (drag-and-drop) independent of any specific widget.
+- **Optimistic UI for drag-and-drop**: the new order of cards/lists is written to the React Query cache synchronously, before the network request — this removes the lag and "flicker" during dragging. On a server error, an exact rollback restores the previous state from a snapshot taken right before the write.
+- **A single axios instance with an interceptor**: the auth token is attached to every request automatically; a 401 response centrally clears the session, avoiding duplicated logic across hooks.
+- **Toast notifications tied to mutation `onError`/`onSuccess`**, rather than scattered across components — a single source of truth for UX feedback.
 
-## Key Engineering Solutions & Features
+## Project Structure
 
-### 1. Optimistic Updates via React Query
+```
+src
+├── app/                # Next.js App Router: layout, providers, page
+├── entities/            # board / card / list / auth — types, API, hooks
+├── features/            # drag-card
+├── shared/
+│   ├── api/             # axios instance, query keys
+│   └── lib/              # utilities (token storage, error parsing)
+└── widgets/             # board-view, list-column, card-item, auth
+```
 
-When dragging and dropping cards, the UI reflects changes instantly without waiting for a server response. Using `queryClient.setQueryData`, the cache state updates immediately. If the server throws a `500` error, the hook automatically triggers a rollback to the last stable state
+## Running Locally
 
-### 2. Centralized Cache Management (`queryKeys`)
+### Prerequisites
 
-All query keys are extracted into a single source of truth within the `shared` layer. This completely eliminates UI sync bugs caused by typos ("magic strings") during query invalidation across different modules
+- Node.js 18+
+- The backend running (see the backend repository) at `http://localhost:5000`
 
-### 3. Secure Backend via Next.js API Routes
+### Steps
 
-All critical business logic and data validation happen strictly on the server side
+```bash
+git clone <frontend-repo-url>
+cd <frontend-repo-folder>
+npm install
+```
 
-### 4. Bulletproof Data Security (Environment Variables)
+Create `.env.local` based on `.env.example`:
 
-All sensitive API keys and database URLs for Supabase are fully decoupled from the codebase using environment variables (`.env.local`) and secured via `.gitignore`. Only clean, production-ready code hits GitHub
+```
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+Run:
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:3000`.
+
+## Core Features
+
+- Registration / login (JWT, token stored in `localStorage`)
+- Creating boards, lists, and cards
+- Drag-and-drop reordering of lists and cards (within a list and across lists) with optimistic UI updates
+- Toast notifications for success/error feedback
+- Data isolation — each user only sees their own boards
