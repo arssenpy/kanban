@@ -13,6 +13,8 @@ import {
 } from "@dnd-kit/sortable";
 import { List } from "@/entities/list/types";
 import { CreateListForm } from "./Create-List-Form";
+import { useLogout } from "@/entities/auth/hooks";
+import { useAuthStore } from "@/entities/auth/store";
 
 export function BoardView({ boardId }: { boardId: string }) {
   const { data: lists = [] } = useLists(boardId);
@@ -49,8 +51,18 @@ export function BoardView({ boardId }: { boardId: string }) {
     [handleDragEnd, lists],
   );
 
+  const logout = useLogout();
+  const user = useAuthStore((s) => s.user);
+
   return (
     <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <span>WSP, {user?.name || user?.email}</span>
+        <button onClick={logout} className="text-sm text-red-600">
+          Logout
+        </button>
+      </div>
+
       <CreateListForm onCreate={handleCreateList} />
 
       <DndContext

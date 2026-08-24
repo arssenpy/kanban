@@ -1,4 +1,5 @@
 import { Providers } from "./providers";
+import { AuthGate } from "@/widgets/auth/Auth-Gate";
 import "./globals.css";
 
 export default function RootLayout({
@@ -9,7 +10,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <AuthGate>{children}</AuthGate>
+        </Providers>
       </body>
     </html>
   );
