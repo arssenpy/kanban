@@ -2,7 +2,7 @@
 
 Client-side of a Kanban application: boards, lists, and cards with smooth drag-and-drop and optimistic UI updates.
 
-**Live app:** [deployment link]
+**Live app:** [https://kanban-mu-ten.vercel.app/]
 **Backend repository:** [[backend repo link](https://github.com/arssenpy/kanban-backend)]
 
 ![Demo](docs/DnDGIF.gif)
