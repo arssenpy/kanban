@@ -23,4 +23,8 @@ export const listApi = {
   reorder: async (payload: { id: string; order: number }[]): Promise<void> => {
     await api.patch("/api/lists/reorder", payload);
   },
+
+  deleteList: async (id: string): Promise<void> => {
+    await api.delete(`/api/lists/${id}`);
+  },
 };

@@ -72,3 +72,37 @@ export const useReorderCards = () => {
     },
   });
 };
+
+export const useDeleteCard = (listId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: cardApi.deleteCard,
+
+    onMutate: async (cardId: string) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.cards(listId) });
+      const previousCards = queryClient.getQueryData<Card[]>(
+        queryKeys.cards(listId),
+      );
+
+      queryClient.setQueryData<Card[]>(queryKeys.cards(listId), (old) =>
+        old?.filter((c) => c.id !== cardId),
+      );
+
+      return { previousCards };
+    },
+
+    onError: (error, cardId, context) => {
+      queryClient.setQueryData(queryKeys.cards(listId), context?.previousCards);
+      toast.error(getErrorMessage(error, "Failed to delete card"));
+    },
+
+    onSuccess: () => {
+      toast.success("Card deleted");
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards(listId) });
+    },
+  });
+};

@@ -25,4 +25,8 @@ export const cardApi = {
   ): Promise<void> => {
     await api.patch("/api/cards/reorder", payload);
   },
+
+  deleteCard: async (id: string): Promise<void> => {
+    await api.delete(`/api/cards/${id}`);
+  },
 };

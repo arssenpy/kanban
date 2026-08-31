@@ -69,3 +69,40 @@ export const useReorderLists = () => {
     },
   });
 };
+
+export const useDeleteList = (boardId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: listApi.deleteList,
+
+    onMutate: async (listId: string) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.lists(boardId) });
+      const previousLists = queryClient.getQueryData<List[]>(
+        queryKeys.lists(boardId),
+      );
+
+      queryClient.setQueryData<List[]>(queryKeys.lists(boardId), (old) =>
+        old?.filter((l) => l.id !== listId),
+      );
+
+      return { previousLists };
+    },
+
+    onError: (error, listId, context) => {
+      queryClient.setQueryData(
+        queryKeys.lists(boardId),
+        context?.previousLists,
+      );
+      toast.error(getErrorMessage(error, "Failed to delete list"));
+    },
+
+    onSuccess: () => {
+      toast.success("List deleted");
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.lists(boardId) });
+    },
+  });
+};

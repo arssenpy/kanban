@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { Card } from "@/entities/card/types";
 import { memo } from "react";
 import { CSS } from "@dnd-kit/utilities";
+import { useDeleteCard } from "@/entities/card/hooks";
 
 export const CardItem = memo(
   ({ card }: { card: Card }) => {
@@ -17,6 +18,15 @@ export const CardItem = memo(
       data: { type: "Card", card },
     });
 
+    const deleteCard = useDeleteCard(card.listId);
+
+    const handleDelete = (e: React.MouseEvent) => {
+      e.stopPropagation(); // щоб клік по кнопці не тригерив drag
+      if (window.confirm(`Видалити картку "${card.title}"?`)) {
+        deleteCard.mutate(card.id);
+      }
+    };
+
     return (
       <div
         ref={setNodeRef}
@@ -27,9 +37,16 @@ export const CardItem = memo(
         }}
         {...attributes}
         {...listeners}
-        className="bg-white p-2 rounded shadow cursor-grab active:cursor-grabbing"
+        className="group bg-white p-2 rounded shadow cursor-grab active:cursor-grabbing flex justify-between items-start gap-2"
       >
-        {card.title}
+        <span>{card.title}</span>
+        <button
+          onClick={handleDelete}
+          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 text-sm transition-opacity"
+          aria-label="Delete Card"
+        >
+          ✕
+        </button>
       </div>
     );
   },

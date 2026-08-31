@@ -11,4 +11,8 @@ export const boardsApi = {
     const response = await api.post<Board>("/api/boards", { title });
     return response.data;
   },
+
+  deleteBoard: async (id: string): Promise<void> => {
+    await api.delete(`/api/boards/${id}`);
+  },
 };
