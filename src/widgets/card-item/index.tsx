@@ -46,7 +46,7 @@ export const CardItem = memo(
           className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0 mt-0.5 touch-none"
           aria-label="Drag card"
         >
-          <GripVertical size={16} />
+          <GripVertical size={22} />
         </button>
 
         <span className="flex-1 break-words">{card.title}</span>
