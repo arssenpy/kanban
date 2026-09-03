@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { Card } from "@/entities/card/types";
 import { memo } from "react";
 import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, X } from "lucide-react";
 import { useDeleteCard } from "@/entities/card/hooks";
 
 export const CardItem = memo(
@@ -23,7 +24,7 @@ export const CardItem = memo(
     const handleDelete = (e: React.MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      if (window.confirm(`Delete Card "${card.title}"?`)) {
+      if (window.confirm(`Delete card "${card.title}"?`)) {
         deleteCard.mutate(card.id);
       }
     };
@@ -36,17 +37,28 @@ export const CardItem = memo(
           transition,
           opacity: isDragging ? 0.4 : 1,
         }}
-        {...attributes}
-        {...listeners}
-        className="group bg-white p-2 rounded shadow cursor-grab active:cursor-grabbing flex justify-between items-start gap-2"
+        className="group bg-white p-2 rounded shadow flex items-start gap-2"
       >
-        <span>{card.title}</span>
         <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0 mt-0.5 touch-none"
+          aria-label="Drag card"
+        >
+          <GripVertical size={16} />
+        </button>
+
+        <span className="flex-1 break-words">{card.title}</span>
+
+        <button
+          type="button"
           onClick={handleDelete}
-          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 text-sm transition-opacity"
+          onPointerDown={(e) => e.stopPropagation()}
+          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 shrink-0 transition-opacity"
           aria-label="Delete Card"
         >
-          ✕
+          <X size={16} />
         </button>
       </div>
     );
