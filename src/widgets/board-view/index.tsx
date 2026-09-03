@@ -3,7 +3,14 @@
 import { useLists, useCreateList } from "@/entities/list/hooks";
 import { ListColumn } from "../list-column";
 import { useState, useCallback, useMemo } from "react";
-import { DndContext, DragOverlay, DragStartEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragOverlay,
+  DragStartEvent,
+  useSensor,
+  useSensors,
+  PointerSensor,
+} from "@dnd-kit/core";
 import { useDragCard } from "@/features/drag-card/model/useDragCard";
 import { CardItem } from "@/widgets/card-item";
 import { Card } from "@/entities/card/types";
@@ -23,6 +30,12 @@ export function BoardView({ boardId }: { boardId: string }) {
 
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [activeList, setActiveList] = useState<List | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+  );
 
   const handleCreateList = useCallback(
     (title: string) => {

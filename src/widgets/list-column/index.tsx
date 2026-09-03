@@ -39,9 +39,7 @@ export const ListColumn = memo(({ list }: { list: List }) => {
 
   const handleDeleteList = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (
-      window.confirm(`Видалити список "${list.title}" разом з усіма картками?`)
-    ) {
+    if (window.confirm(`Delete list "${list.title}" with all cards?`)) {
       deleteList.mutate(list.id);
     }
   };

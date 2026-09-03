@@ -21,8 +21,9 @@ export const CardItem = memo(
     const deleteCard = useDeleteCard(card.listId);
 
     const handleDelete = (e: React.MouseEvent) => {
-      e.stopPropagation(); // щоб клік по кнопці не тригерив drag
-      if (window.confirm(`Видалити картку "${card.title}"?`)) {
+      e.stopPropagation();
+      e.preventDefault();
+      if (window.confirm(`Delete Card "${card.title}"?`)) {
         deleteCard.mutate(card.id);
       }
     };
